@@ -7,6 +7,7 @@ node_modules/
 
 # Compiled binary addons (https://nodejs.org/api/addons.html)
 build/
+main.js
 
 # dotenv environment variable files
 .env
