@@ -39,7 +39,7 @@ client.on("messageCreate", async (message: Message) => {
   if (!mentioned(message)) return;
   if (notExistAttachments(message)) {
     message.channel.send(
-      "slackからエクスポートしたファイルを添付してください。"
+      "slackからエクスポートしたメッセージファイルと`users.json`というファイルを添付してください。"
     );
     return;
   }
@@ -47,7 +47,6 @@ client.on("messageCreate", async (message: Message) => {
   const jsonFiles = await fetchJsonFiles(message);
 
   const usersJsonFile = findUsersJsonFile(jsonFiles);
-
   if (!usersJsonFile) {
     message.channel.send("`users.json`というファイルを添付してください。");
     return;
@@ -55,8 +54,17 @@ client.on("messageCreate", async (message: Message) => {
 
   const users = extractUsers(usersJsonFile);
 
-  jsonFiles
-    .filter((json) => json?.name !== "users.json")
+  const slackMessageJsonFiles = jsonFiles.filter(
+    (json) => json?.name !== "users.json"
+  );
+  if (!slackMessageJsonFiles) {
+    message.channel.send(
+      "slackからエクスポートしたメッセージファイルを添付してください。"
+    );
+    return;
+  }
+
+  slackMessageJsonFiles
     .slice()
     .sort((a, b) => a?.name?.localeCompare(b?.name ?? "") ?? 0)
     .forEach((slackMessageJsonFile) => {
@@ -64,14 +72,13 @@ client.on("messageCreate", async (message: Message) => {
         .filter(filterMessage)
         .slice()
         .sort((a, b) => a["ts"].localeCompare(b["ts"]))
-        .map((slackMessage) => {
-          return `${findUser(users, slackMessage["user"])?.name}: ${buildText(
-            slackMessage["text"]
-          )} (${toLocaleString(slackMessage["ts"])})`;
-        })
-        .forEach((text) => {
-          message.channel.send(text);
-        });
+        .map(
+          (slackMessage) =>
+            `${findUser(users, slackMessage["user"])?.name}: ${buildText(
+              slackMessage["text"]
+            )} (${toLocaleString(slackMessage["ts"])})`
+        )
+        .forEach((text) => message.channel.send(text));
     });
 });
 
