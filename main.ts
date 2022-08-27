@@ -1,5 +1,13 @@
 import { Message, Client, GatewayIntentBits } from "discord.js";
 import dotenv from "dotenv";
+import express from "express";
+
+const app = express();
+app.get("/ping", (_, res) => {
+  res.status(200).send("pong");
+});
+
+app.listen(3000);
 
 dotenv.config();
 
