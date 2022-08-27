@@ -7,7 +7,7 @@ app.get("/ping", (_, res) => {
   res.status(200).send("pong");
 });
 
-app.listen(process.env.PORT || "3000");
+app.listen(process.env.PORT || 3001);
 
 dotenv.config();
 

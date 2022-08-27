@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "build": "tsc --build",
-    "start": "export PORT=443 && node ./build/main.js",
+    "start": "node ./build/main.js",
     "dev": "tsc --build && node ./build/main.js"
   },
   "keywords": [],
