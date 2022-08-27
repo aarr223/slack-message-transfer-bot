@@ -2,15 +2,20 @@ import { Message, Client, GatewayIntentBits } from "discord.js";
 import dotenv from "dotenv";
 import express from "express";
 
+dotenv.config();
+
+// --------------------------------------
+// web server
+// --------------------------------------
 const app = express();
 app.get("/ping", (_, res) => {
   res.status(200).send("pong");
 });
-
 app.listen(process.env.PORT || 3001);
 
-dotenv.config();
-
+// --------------------------------------
+// discord bot
+// --------------------------------------
 const client = new Client({
   intents: [
     GatewayIntentBits.Guilds,
@@ -19,10 +24,16 @@ const client = new Client({
   ],
 });
 
+// -----------------
+// on ready
+// -----------------
 client.once("ready", () => {
   console.log("Ready!");
 });
 
+// -----------------
+// on message create
+// -----------------
 client.on("messageCreate", async (message: Message) => {
   if (message.author.bot) return;
   if (!mentioned(message)) return;
@@ -34,8 +45,6 @@ client.on("messageCreate", async (message: Message) => {
   }
 
   const jsonFiles = await fetchJsonFiles(message);
-
-  console.log(jsonFiles);
 
   const usersJsonFile = findUsersJsonFile(jsonFiles);
 
@@ -53,6 +62,8 @@ client.on("messageCreate", async (message: Message) => {
     .forEach((slackMessageJsonFile) => {
       slackMessageJsonFile?.json
         .filter(filterMessage)
+        .slice()
+        .sort((a, b) => a["ts"].localeCompare(b["ts"]))
         .map((slackMessage) => {
           return `${findUser(users, slackMessage["user"])?.name}: ${buildText(
             slackMessage["text"]
