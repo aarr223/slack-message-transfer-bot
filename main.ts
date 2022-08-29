@@ -177,7 +177,7 @@ const toLocaleString = (ts: string) => {
 
 const splitSlackMessage = (slackMessage: any, users: User[]) => {
   const text: string = slackMessage["text"];
-  const textChunks = text.match(/.{1900}/g);
+  const textChunks = text.match(/.{1000}/g);
 
   return textChunks?.map((chunk, i) => {
     // 最初のメッセージにはユーザー名を付加
