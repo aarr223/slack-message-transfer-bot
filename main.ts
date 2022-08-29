@@ -198,6 +198,7 @@ const splitSlackMessage = (slackMessage: any, users: User[]) => {
 };
 
 const sendMessage = async (message: Message, text: string) => {
+  sleep(0.1); // 念の為0.1秒間隔をあける
   try {
     await message.channel.send(text);
   } catch (error) {
@@ -208,3 +209,6 @@ const sendMessage = async (message: Message, text: string) => {
     }
   }
 };
+
+const sleep = (second: number) =>
+  new Promise((resolve) => setTimeout(resolve, second * 1000));
