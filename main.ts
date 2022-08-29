@@ -1,4 +1,9 @@
-import { Message, Client, GatewayIntentBits } from "discord.js";
+import {
+  Message,
+  Client,
+  GatewayIntentBits,
+  DiscordAPIError,
+} from "discord.js";
 import dotenv from "dotenv";
 import express from "express";
 
@@ -72,13 +77,25 @@ client.on("messageCreate", async (message: Message) => {
         .filter(filterMessage)
         .slice()
         .sort((a, b) => a["ts"].localeCompare(b["ts"]))
-        .map(
-          (slackMessage) =>
-            `${findUser(users, slackMessage["user"])?.name}: ${buildText(
-              slackMessage["text"]
-            )} (${toLocaleString(slackMessage["ts"])})`
-        )
-        .forEach((text) => message.channel.send(text));
+        .map((slackMessage) => {
+          // discordの1メッセージあたりの最大文字数は2000文字なので、余裕をもって1900文字を超えたら分割する
+          if (slackMessage["text"].length > 1900) {
+            return splitSlackMessage(slackMessage, users);
+          }
+
+          return `${findUser(users, slackMessage["user"])?.name}: ${buildText(
+            slackMessage["text"]
+          )} (${toLocaleString(slackMessage["ts"])})`;
+        })
+        .forEach(async (text) => {
+          if (typeof text === "string") {
+            await sendMessage(message, text);
+          } else {
+            text?.forEach(
+              async (splittedText) => await sendMessage(message, splittedText)
+            );
+          }
+        });
     });
 });
 
@@ -156,4 +173,38 @@ const filterMessage = (slackMessage: any) =>
 
 const toLocaleString = (ts: string) => {
   return new Date(parseInt(ts) * 1000).toLocaleString();
+};
+
+const splitSlackMessage = (slackMessage: any, users: User[]) => {
+  const text: string = slackMessage["text"];
+  const textChunks = text.match(/.{1900}/g);
+
+  return textChunks?.map((chunk, i) => {
+    // 最初のメッセージにはユーザー名を付加
+    if (i === 0) {
+      return `${findUser(users, slackMessage["user"])?.name}: ${buildText(
+        chunk
+      )}`;
+    }
+
+    // 最後のメッセージには日時を付加
+    if (i === textChunks.length - 1) {
+      return `${buildText(chunk)} (${toLocaleString(slackMessage["ts"])})`;
+    }
+
+    // それ以外のメッセージはそのまま
+    return buildText(chunk);
+  });
+};
+
+const sendMessage = async (message: Message, text: string) => {
+  try {
+    await message.channel.send(text);
+  } catch (error) {
+    if (error instanceof DiscordAPIError) {
+      console.error(error.rawError);
+    } else {
+      console.error(error);
+    }
+  }
 };
