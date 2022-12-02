@@ -99,7 +99,7 @@ client.on("messageCreate", async (message: Message) => {
     });
 });
 
-client.login(process.env.TOKEN);
+client.login("MTA0ODA5MjAwODA1NDUzMDE0OQ.GGBLLl.TOhpJmDmF1Hvm4fTZtl8aGrg_rA3tzSlMezHqU");
 
 // --------------------------------------
 // types
